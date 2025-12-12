@@ -1,5 +1,7 @@
 (function () {
-  // --- Inject CSS ---
+  console.log("[MWM] Dual Widget script initialized ✅");
+
+  // --- Inject styles ---
   const css = `
   @import url('https://fonts.googleapis.com/css2?family=Poppins&display=swap');
   .floating-scheduler-mini {
@@ -53,7 +55,7 @@
   style.textContent = css;
   document.head.appendChild(style);
 
-  // --- Create Buttons ---
+  // --- Create buttons ---
   const guidedBtn = document.createElement('div');
   guidedBtn.id = 'openGuided';
   guidedBtn.className = 'floating-scheduler-mini';
@@ -73,7 +75,6 @@
   document.body.appendChild(guidedBtn);
   document.body.appendChild(selfBtn);
 
-  // --- Fade in both buttons ---
   window.addEventListener("load", () => {
     setTimeout(() => {
       guidedBtn.classList.add("show");
@@ -81,58 +82,71 @@
     }, 150);
   });
 
-  // --- Property Map ---
+  // --- Property map ---
   const map = {
-    "ascotarms.prospectportal.com": {
+    ascot: {
       g: "https://www.myshowing.com/Midwest_Property_Management/Ascot_Arms_(Empire_Park)/scheduletourwidget/a0F0H00000d3i9sUAA/",
       s: "https://prop.peek.us/659c209ccdaa2af31fe90c5e/self-guided-tour/"
     },
-    "empirepark.prospectportal.com": {
+    empire: {
       g: "https://www.myshowing.com/Midwest_Property_Management/Empire_Park_(Empire_Park)/scheduletourwidget/a0F0H00000d3iA6UAI/",
       s: "https://prop.peek.us/659c20d06dc4272dc1c6fe18/self-guided-tour/"
     },
-    "thevillageatsouthgate.prospectportal.com": {
+    village: {
       g: "https://www.myshowing.com/Midwest_Property_Management/The_Village_at_Southgate_(Southgate)/scheduletourwidget/a0F0H00000d3iAPUAY/",
       s: "https://prop.peek.us/66350d32f4dbddfd2b1863d7/self-guided-tour/"
     },
-    "rivervalleytownhomes.prospectportal.com": {
+    rivervalley: {
       g: "https://www.myshowing.com/Midwest_Property_Management/Rivervalley_Townhomes_(Gold_Bar)/scheduletourwidget/a0F0H00000d3iAKUAY/",
       s: "https://prop.peek.us/66350d825cb18b6935f276b2/self-guided-tour/"
     },
-    "sirjohnfranklin.prospectportal.com": {
+    franklin: {
       g: "https://www.myshowing.com/Midwest_Property_Management/Sir_John_Franklin_(Old_Strathcona)/scheduletourwidget/a0F0H00000d3iAMUAY/",
       s: "https://prop.peek.us/66350e28f4dbddfd2b19646a/self-guided-tour/"
     },
-    "pleasantviewtownhomes.prospectportal.com": {
+    pleasantview: {
       g: "https://www.myshowing.com/Midwest_Property_Management/Pleasantview_Townhomes_(Empire_Park)/scheduletourwidget/a0F0H00000d3iAIUAY/",
       s: "https://prop.peek.us/668c75b7bbe11732e731384f/self-guided-tour/"
     },
-    "elmwoodtownhomes.prospectportal.com": {
+    elmwood: {
       g: "https://www.myshowing.com/Midwest_Property_Management/Elmwood_Townhomes_(Elmwood)/scheduletourwidget/a0F0H00000d3iA5UAI/",
       s: "https://prop.peek.us/668c766ffa52e0189568d9a9/self-guided-tour/"
     },
-    "cricketcourt.prospectportal.com": {
+    cricket: {
       g: "https://www.myshowing.com/Midwest_Property_Management/Cricket_Court_Townhomes_(Aldergrove)/scheduletourwidget/a0F0H00000d3iA1UAI/",
       s: "https://prop.peek.us/668c76b1edee275669b4508d/self-guided-tour/"
     },
-    "cambriancourt.prospectportal.com": {
+    cambrian: {
       g: "https://www.myshowing.com/Midwest_Property_Management/Cambrian_Court_(Cambrian_Heights)/scheduletourwidget/a0F0H00000d3i9vUAA/",
       s: "https://prop.peek.us/66aaaa33f7d05462a7f4be8e/self-guided-tour/"
     },
-    "secondstreetfundcommercial.prospectportal.com": {
+    test: {
       g: "https://www.myshowing.com/Midwest_Property_Management/The_Village_at_Southgate_(Southgate)/scheduletourwidget/a0F0H00000d3iAPUAY/",
       s: "https://prop.peek.us/66350d32f4dbddfd2b1863d7/self-guided-tour/"
     }
   };
 
+  // --- Detect current site ---
   const host = (location.hostname || "").toLowerCase();
-  const urls = map[host] || map["secondstreetfundcommercial.prospectportal.com"];
+  console.log("[MWM] Host detected:", host);
 
-  console.log(`[MWM] Host detected: ${host}`);
-  console.log(`[MWM] Using Guided URL: ${urls.g}`);
-  console.log(`[MWM] Using Self-Guided URL: ${urls.s}`);
+  // --- Smart match ---
+  let matchKey = null;
+  for (const key in map) {
+    if (host.includes(key)) {
+      matchKey = key;
+      break;
+    }
+  }
 
-  // --- Click Actions ---
-  guidedBtn.addEventListener("click", () => window.open(urls.g, "_blank"));
-  selfBtn.addEventListener("click", () => window.open(urls.s, "_blank"));
+  if (!matchKey) matchKey = "test";
+
+  const urls = map[matchKey];
+  console.log(`[MWM] Matched property: ${matchKey}`);
+  console.log(`[MWM] Guided: ${urls.g}`);
+  console.log(`[MWM] Self-guided: ${urls.s}`);
+
+  // --- Button clicks ---
+  guidedBtn.addEventListener("click", () => window.open(urls.g, "_blank", "noopener"));
+  selfBtn.addEventListener("click", () => window.open(urls.s, "_blank", "noopener"));
 })();
