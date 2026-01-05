@@ -1,50 +1,68 @@
 (function () {
+  "use strict";
+
+  // ===== VERSION (helps confirm caching) =====
+  const VERSION = "2026-01-05-v4";
+  // Uncomment if you want a visible console check:
+  // console.log("[MPM Tour Dock]", VERSION, "loaded");
+
   // ===== Property map (9 sites) =====
   const CONFIG = {
     "ascotarms.prospectportal.com": {
       selfUrl: "https://prop.peek.us/659c209ccdaa2af31fe90c5e/self-guided-tour/",
-      agentUrl: "https://www.myshowing.com/Midwest_Property_Management/Ascot_Arms_(Empire_Park)/scheduletourwidget/a0F0H00000d3i9sUAA"
+      agentUrl:
+        "https://www.myshowing.com/Midwest_Property_Management/Ascot_Arms_(Empire_Park)/scheduletourwidget/a0F0H00000d3i9sUAA",
     },
     "cambriancourt.prospectportal.com": {
       selfUrl: "https://prop.peek.us/66aaaa33f7d05462a7f4be8e/self-guided-tour/",
-      agentUrl: "https://www.myshowing.com/Midwest_Property_Management/Cambrian_Court_(Cambrian_Heights)/scheduletourwidget/a0F0H00000d3i9vUAA/"
+      agentUrl:
+        "https://www.myshowing.com/Midwest_Property_Management/Cambrian_Court_(Cambrian_Heights)/scheduletourwidget/a0F0H00000d3i9vUAA/",
     },
     "cricketcourt.prospectportal.com": {
       selfUrl: "https://prop.peek.us/668c76b1edee275669b4508d/self-guided-tour/",
-      agentUrl: "https://www.myshowing.com/Midwest_Property_Management/Cricket_Court_Townhomes_(Aldergrove)/scheduletourwidget/a0F0H00000d3iA1UAI/"
+      agentUrl:
+        "https://www.myshowing.com/Midwest_Property_Management/Cricket_Court_Townhomes_(Aldergrove)/scheduletourwidget/a0F0H00000d3iA1UAI/",
     },
     "elmwoodtownhomes.prospectportal.com": {
       selfUrl: "https://prop.peek.us/668c766ffa52e0189568d9a9/self-guided-tour/",
-      agentUrl: "https://www.myshowing.com/Midwest_Property_Management/Elmwood_Townhomes_(Elmwood)/scheduletourwidget/a0F0H00000d3iA5UAI/"
+      agentUrl:
+        "https://www.myshowing.com/Midwest_Property_Management/Elmwood_Townhomes_(Elmwood)/scheduletourwidget/a0F0H00000d3iA5UAI/",
     },
     "empirepark.prospectportal.com": {
       selfUrl: "https://prop.peek.us/659c20d06dc4272dc1c6fe18/self-guided-tour/",
-      agentUrl: "https://www.myshowing.com/Midwest_Property_Management/Empire_Park_(Empire_Park)/scheduletourwidget/a0F0H00000d3iA6UAI/"
+      agentUrl:
+        "https://www.myshowing.com/Midwest_Property_Management/Empire_Park_(Empire_Park)/scheduletourwidget/a0F0H00000d3iA6UAI/",
     },
     "pleasantviewtownhomes.prospectportal.com": {
       selfUrl: "https://prop.peek.us/668c75b7bbe11732e731384f/self-guided-tour/",
-      agentUrl: "https://www.myshowing.com/Midwest_Property_Management/Pleasantview_Townhomes_(Empire_Park)/scheduletourwidget/a0F0H00000d3iAIUAY"
+      agentUrl:
+        "https://www.myshowing.com/Midwest_Property_Management/Pleasantview_Townhomes_(Empire_Park)/scheduletourwidget/a0F0H00000d3iAIUAY",
     },
     "rivervalleytownhomes.prospectportal.com": {
       selfUrl: "https://prop.peek.us/66350d825cb18b6935f276b2/self-guided-tour/",
-      agentUrl: "https://www.myshowing.com/Midwest_Property_Management/Rivervalley_Townhomes_(Gold_Bar)/scheduletourwidget/a0F0H00000d3iAKUAY/"
+      agentUrl:
+        "https://www.myshowing.com/Midwest_Property_Management/Rivervalley_Townhomes_(Gold_Bar)/scheduletourwidget/a0F0H00000d3iAKUAY/",
     },
     "sirjohnfranklin.prospectportal.com": {
       selfUrl: "https://prop.peek.us/66350e28f4dbddfd2b19646a/self-guided-tour/",
-      agentUrl: "https://www.myshowing.com/Midwest_Property_Management/Sir_John_Franklin_(Old_Strathcona)/scheduletourwidget/a0F0H00000d3iAMUAY"
+      agentUrl:
+        "https://www.myshowing.com/Midwest_Property_Management/Sir_John_Franklin_(Old_Strathcona)/scheduletourwidget/a0F0H00000d3iAMUAY",
     },
     "thevillageatsouthgate.prospectportal.com": {
       selfUrl: "https://prop.peek.us/66350d32f4dbddfd2b1863d7/self-guided-tour/",
-      agentUrl: "https://www.myshowing.com/Midwest_Property_Management/The_Village_at_Southgate_(Southgate)/scheduletourwidget/a0F0H00000d3iAPUAY/"
-    }
+      agentUrl:
+        "https://www.myshowing.com/Midwest_Property_Management/The_Village_at_Southgate_(Southgate)/scheduletourwidget/a0F0H00000d3iAPUAY/",
+    },
   };
 
-  const host = (window.location.hostname || "").replace(/^www\./, "");
+  // ===== Host match =====
+  const host = String(window.location.hostname || "").replace(/^www\./, "");
   const cfg = CONFIG[host];
   if (!cfg) return;
 
-  if (window.__MPM_TOURS_LOADED__) return;
-  window.__MPM_TOURS_LOADED__ = true;
+  // ===== Single-run guard =====
+  if (window.__MPM_TOUR_DOCK_V4__) return;
+  window.__MPM_TOUR_DOCK_V4__ = true;
 
   function onReady(fn) {
     if (document.readyState === "complete" || document.readyState === "interactive") fn();
@@ -52,58 +70,69 @@
   }
 
   function injectStyles() {
-    if (document.getElementById("mpm-tour-styles")) return;
+    if (document.getElementById("mpm-tour-dock-styles-v4")) return;
 
     const style = document.createElement("style");
-    style.id = "mpm-tour-styles";
+    style.id = "mpm-tour-dock-styles-v4";
     style.textContent = `
       :root{
-        --btn-size: 48px;
-        --dock-right: 24px;
-        --dock-bottom: 35px;
-        --gap-bubble: 14px;
+        --mpm-btn: 48px;
+        --mpm-right: 24px;
+        --mpm-bottom: 35px;
+        --mpm-gap: 14px;
+        --mpm-blue: #093457;
 
-        --brand-blue: #093457;
-
-        --tooltip-bg: rgba(9, 52, 87, .96);
-        --tooltip-text: #fff;
+        --mpm-tip-bg: rgba(9,52,87,.96);
+        --mpm-tip-text: #fff;
       }
 
-      #mpm-tour-dock{
+      #mpm-tour-dock-v4{
         position: fixed;
-        right: var(--dock-right);
-        bottom: var(--dock-bottom);
+        right: var(--mpm-right);
+        bottom: var(--mpm-bottom);
         display: flex;
+        gap: var(--mpm-gap);
         align-items: center;
-        gap: var(--gap-bubble);
-        z-index: 99997;
+        z-index: 999999; /* keep above most UI */
       }
 
-      .mpm-tour-btn{
-        width: var(--btn-size);
-        height: var(--btn-size);
-        border-radius: 50%;
-        background: var(--brand-blue);
+      .mpm-btn{
+        width: var(--mpm-btn);
+        height: var(--mpm-btn);
+        border-radius: 999px;
+        background: var(--mpm-blue);
         display: inline-flex;
         align-items: center;
         justify-content: center;
         text-decoration: none;
-        -webkit-tap-highlight-color: transparent;
         position: relative;
-        box-shadow: 0 10px 25px rgba(0,0,0,.16);
+        box-shadow: 0 12px 28px rgba(0,0,0,.18);
         transform: translateZ(0);
-        transition: transform .18s ease, filter .18s ease;
+        -webkit-tap-highlight-color: transparent;
+        cursor: pointer;
+        user-select: none;
       }
 
-      .mpm-tour-btn svg{
-        width: 60%;
-        height: 60%;
-        fill: #fff;
-        display: block;
+      .mpm-btn svg{ width: 60%; height: 60%; fill: #fff; display:block; }
+
+      /* ===== Strong pulse so it's obvious ===== */
+      .mpm-btn--agent{
+        animation: mpmPulseV4 1.9s ease-in-out infinite;
+      }
+      @keyframes mpmPulseV4{
+        0%   { transform: scale(1);   box-shadow: 0 12px 28px rgba(0,0,0,.18); }
+        50%  { transform: scale(1.06); box-shadow: 0 18px 38px rgba(0,0,0,.28); }
+        100% { transform: scale(1);   box-shadow: 0 12px 28px rgba(0,0,0,.18); }
       }
 
-      /* ===== Tooltip label ===== */
-      .mpm-tour-btn::after{
+      /* ===== Hover lift (desktop) ===== */
+      @media (hover:hover){
+        .mpm-btn{ transition: transform .16s ease, filter .16s ease; }
+        .mpm-btn:hover{ transform: translateY(-2px) scale(1.02); filter: brightness(1.06); }
+      }
+
+      /* ===== Tooltip label (desktop hover + mobile toggle class) ===== */
+      .mpm-btn::after{
         content: attr(data-label);
         position: absolute;
         right: calc(100% + 10px);
@@ -111,20 +140,17 @@
         transform: translateY(-50%) translateX(6px);
         opacity: 0;
         pointer-events: none;
-
-        background: var(--tooltip-bg);
-        color: var(--tooltip-text);
+        background: var(--mpm-tip-bg);
+        color: var(--mpm-tip-text);
         font: 600 12px/1.1 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
         padding: 8px 10px;
         border-radius: 999px;
         white-space: nowrap;
         letter-spacing: .2px;
-        box-shadow: 0 10px 25px rgba(0,0,0,.18);
-
-        transition: opacity .16s ease, transform .16s ease;
+        box-shadow: 0 12px 28px rgba(0,0,0,.18);
+        transition: opacity .14s ease, transform .14s ease;
       }
-
-      .mpm-tour-btn::before{
+      .mpm-btn::before{
         content: "";
         position: absolute;
         right: calc(100% + 2px);
@@ -132,75 +158,60 @@
         transform: translateY(-50%);
         opacity: 0;
         pointer-events: none;
-
         width: 0; height: 0;
         border-top: 6px solid transparent;
         border-bottom: 6px solid transparent;
-        border-left: 8px solid var(--tooltip-bg);
-        transition: opacity .16s ease;
+        border-left: 8px solid var(--mpm-tip-bg);
+        transition: opacity .14s ease;
       }
 
       @media (hover:hover){
-        .mpm-tour-btn:hover{
-          transform: translateY(-2px) scale(1.02);
-          filter: brightness(1.06);
-        }
-        .mpm-tour-btn:hover::after{
-          opacity: 1;
-          transform: translateY(-50%) translateX(0);
-        }
-        .mpm-tour-btn:hover::before{
-          opacity: 1;
-        }
+        .mpm-btn:hover::after{ opacity: 1; transform: translateY(-50%) translateX(0); }
+        .mpm-btn:hover::before{ opacity: 1; }
       }
 
-      /* ===== Calendar button animation ===== */
-      .mpm-agent{
-        animation: mpmPulse 2.6s ease-in-out infinite;
-      }
-      @keyframes mpmPulse{
-        0%, 100% { box-shadow: 0 10px 25px rgba(0,0,0,.16); transform: translateZ(0); }
-        50% { box-shadow: 0 14px 32px rgba(0,0,0,.24); transform: translateY(-1px); }
-      }
-      @media (prefers-reduced-motion: reduce){
-        .mpm-agent{ animation: none !important; }
-        .mpm-tour-btn{ transition:none !important; }
-        .mpm-tour-btn::after{ transition:none !important; }
-      }
+      /* Mobile/touch: show tooltip when toggled */
+      .mpm-show-tip::after{ opacity:1 !important; transform: translateY(-50%) translateX(0) !important; }
+      .mpm-show-tip::before{ opacity:1 !important; }
 
       /* ===== Self button lock swap (kept) ===== */
-      .mpm-lock-wrap{ position: relative; width:60%; height:60%; }
-      .mpm-lock-wrap svg{
+      .mpm-lock{ position: relative; width:60%; height:60%; }
+      .mpm-lock svg{
         position:absolute; inset:0; width:100%; height:100%;
         fill:#fff; transition: opacity .18s ease, transform .18s ease;
       }
-      .mpm-lock-open{ opacity:0; transform: translateY(2px) scale(0.96); }
-      .mpm-lock-closed{ opacity:1; transform: translateY(0) scale(1); }
+      .mpm-lock--open{ opacity:0; transform: translateY(2px) scale(.96); }
+      .mpm-lock--closed{ opacity:1; transform: translateY(0) scale(1); }
 
       @media (hover:hover){
-        .mpm-self:hover .mpm-lock-closed{ opacity:0; transform: translateY(-2px) scale(0.96); }
-        .mpm-self:hover .mpm-lock-open{ opacity:1; transform: translateY(0) scale(1); }
+        .mpm-btn--self:hover .mpm-lock--closed{ opacity:0; transform: translateY(-2px) scale(.96); }
+        .mpm-btn--self:hover .mpm-lock--open{ opacity:1; transform: translateY(0) scale(1); }
       }
 
+      /* Small screens tweaks */
       @media (max-width: 768px){
-        :root{
-          --dock-right: 20px;
-          --dock-bottom: 38px;
-          --gap-bubble: 12px;
-        }
+        :root{ --mpm-right: 18px; --mpm-bottom: 38px; --mpm-gap: 12px; }
+      }
+
+      /* Respect reduce motion */
+      @media (prefers-reduced-motion: reduce){
+        .mpm-btn--agent{ animation: none !important; }
+        .mpm-btn, .mpm-lock svg, .mpm-btn::after{ transition: none !important; }
       }
     `;
     document.head.appendChild(style);
   }
 
   function renderDock() {
-    if (document.getElementById("mpm-tour-dock")) return;
-    if (!document.body) return setTimeout(renderDock, 100);
+    if (document.getElementById("mpm-tour-dock-v4")) return;
+    if (!document.body) return setTimeout(renderDock, 60);
 
     const dock = document.createElement("div");
-    dock.id = "mpm-tour-dock";
+    dock.id = "mpm-tour-dock-v4";
+    dock.setAttribute("aria-label", "Tour options");
+
     dock.innerHTML = `
-      <a class="mpm-tour-btn mpm-agent"
+      <a class="mpm-btn mpm-btn--agent"
          data-label="Agent-Guided Tour"
          href="${cfg.agentUrl}"
          target="_blank"
@@ -213,28 +224,13 @@
         </svg>
       </a>
 
-      <a class="mpm-tour-btn mpm-self"
+      <a class="mpm-btn mpm-btn--self"
          data-label="Self-Guided Tour"
          href="${cfg.selfUrl}"
          target="_blank"
          rel="noopener"
          aria-label="Self-Guided Tour"
          title="Self-Guided Tour">
-        <span class="mpm-lock-wrap" aria-hidden="true">
-          <svg class="mpm-lock-closed" viewBox="0 0 24 24">
-            <path d="M17 9h-1V7a4 4 0 0 0-8 0v2H7a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2Zm-7-2a2 2 0 1 1 4 0v2h-4V7Zm3 9.73V18a1 1 0 0 1-2 0v-1.27a2 2 0 1 1 2 0Z"/>
-          </svg>
-          <svg class="mpm-lock-open" viewBox="0 0 24 24">
-            <path d="M12 2a4 4 0 0 0-4 4v2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-8V6a2 2 0 1 1 4 0h2a4 4 0 0 0-4-4z"/>
-          </svg>
-        </span>
-      </a>
-    `;
-    document.body.appendChild(dock);
-  }
-
-  onReady(function () {
-    injectStyles();
-    renderDock();
-  });
-})();
+        <span class="mpm-lock" aria-hidden="true">
+          <svg class="mpm-lock--closed" viewBox="0 0 24 24">
+            <path d="M17 9h-1V7a4 4 0 0 0-8 0v2H7a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2Zm-7-2a2 2 0 1 1 4 0v2h-
