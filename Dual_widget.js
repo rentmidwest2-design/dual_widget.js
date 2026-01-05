@@ -1,152 +1,161 @@
 (function () {
-  console.log("[MWM] Dual Widget script initialized ✅");
-
-  // --- Inject styles ---
-  const css = `
-  @import url('https://fonts.googleapis.com/css2?family=Poppins&display=swap');
-  .floating-scheduler-mini {
-    position: fixed;
-    right: 20px;
-    background: linear-gradient(135deg,#eaaa00,#d4940a);
-    color: #fff;
-    padding: 14px 18px;
-    border-radius: 50px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    cursor: pointer;
-    z-index: 9999;
-    animation: pulse 2s infinite, fadeIn 1s ease forwards;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 600;
-    opacity: 0;
-    transform: translateY(20px);
-    transition: transform 0.2s ease;
-    font-family: 'Poppins', sans-serif;
-  }
-  .floating-scheduler-mini.show {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  .floating-scheduler-mini:hover {
-    filter: brightness(1.1);
-    transform: translateY(-2px);
-  }
-  @keyframes pulse {
-    0% { box-shadow: 0 0 0 0 rgba(234,170,0,0.6); }
-    70% { box-shadow: 0 0 0 12px rgba(234,170,0,0); }
-    100% { box-shadow: 0 0 0 0 rgba(234,170,0,0); }
-  }
-  @keyframes svgPulse {
-    0%,100% { transform: scale(1); }
-    50% { transform: scale(1.15); }
-  }
-  @keyframes fadeIn {
-    to { opacity: 1; transform: translateY(0); }
-  }
-  .floating-scheduler-mini svg {
-    width: 20px; height: 20px; fill: #fff;
-    animation: svgPulse 2s infinite ease-in-out;
-  }
-  #openSelfGuided { bottom: 80px; }
-  #openGuided { bottom: 140px; }
-  `;
-  const style = document.createElement('style');
-  style.textContent = css;
-  document.head.appendChild(style);
-
-  // --- Create buttons ---
-  const guidedBtn = document.createElement('div');
-  guidedBtn.id = 'openGuided';
-  guidedBtn.className = 'floating-scheduler-mini';
-  guidedBtn.innerHTML = `
-    <svg viewBox="0 0 24 24"><path d="M12 12c2.67 0 8 1.34 8 4v3H4v-3c0-2.66 5.33-4 8-4zm0-2a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/></svg>
-    <span>Book a Showing</span>
-  `;
-
-  const selfBtn = document.createElement('div');
-  selfBtn.id = 'openSelfGuided';
-  selfBtn.className = 'floating-scheduler-mini';
-  selfBtn.innerHTML = `
-    <svg viewBox="0 0 24 24"><path d="M12 17a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm6-6V9a6 6 0 1 0-12 0v2H5v10h14V11h-1zm-8 0V9a4 4 0 1 1 8 0v2h-8z"/></svg>
-    <span>Self-Guided Viewing</span>
-  `;
-
-  document.body.appendChild(guidedBtn);
-  document.body.appendChild(selfBtn);
-
-  window.addEventListener("load", () => {
-    setTimeout(() => {
-      guidedBtn.classList.add("show");
-      selfBtn.classList.add("show");
-    }, 150);
-  });
-
-  // --- Property map ---
-  const map = {
-    ascot: {
-      g: "https://www.myshowing.com/Midwest_Property_Management/Ascot_Arms_(Empire_Park)/scheduletourwidget/a0F0H00000d3i9sUAA/",
-      s: "https://prop.peek.us/659c209ccdaa2af31fe90c5e/self-guided-tour/"
+  // ===== Property map (9 sites) =====
+  const CONFIG = {
+    "ascotarms.prospectportal.com": {
+      selfUrl: "https://prop.peek.us/659c209ccdaa2af31fe90c5e/self-guided-tour/",
+      agentUrl: "https://www.myshowing.com/Midwest_Property_Management/Ascot_Arms_(Empire_Park)/scheduletourwidget/a0F0H00000d3i9sUAA"
     },
-    empire: {
-      g: "https://www.myshowing.com/Midwest_Property_Management/Empire_Park_(Empire_Park)/scheduletourwidget/a0F0H00000d3iA6UAI/",
-      s: "https://prop.peek.us/659c20d06dc4272dc1c6fe18/self-guided-tour/"
+    "cambriancourt.prospectportal.com": {
+      selfUrl: "https://prop.peek.us/66aaaa33f7d05462a7f4be8e/self-guided-tour/",
+      agentUrl: "https://www.myshowing.com/Midwest_Property_Management/Cambrian_Court_(Cambrian_Heights)/scheduletourwidget/a0F0H00000d3i9vUAA/"
     },
-    village: {
-      g: "https://www.myshowing.com/Midwest_Property_Management/The_Village_at_Southgate_(Southgate)/scheduletourwidget/a0F0H00000d3iAPUAY/",
-      s: "https://prop.peek.us/66350d32f4dbddfd2b1863d7/self-guided-tour/"
+    "cricketcourt.prospectportal.com": {
+      selfUrl: "https://prop.peek.us/668c76b1edee275669b4508d/self-guided-tour/",
+      agentUrl: "https://www.myshowing.com/Midwest_Property_Management/Cricket_Court_Townhomes_(Aldergrove)/scheduletourwidget/a0F0H00000d3iA1UAI/"
     },
-    rivervalley: {
-      g: "https://www.myshowing.com/Midwest_Property_Management/Rivervalley_Townhomes_(Gold_Bar)/scheduletourwidget/a0F0H00000d3iAKUAY/",
-      s: "https://prop.peek.us/66350d825cb18b6935f276b2/self-guided-tour/"
+    "elmwoodtownhomes.prospectportal.com": {
+      selfUrl: "https://prop.peek.us/668c766ffa52e0189568d9a9/self-guided-tour/",
+      agentUrl: "https://www.myshowing.com/Midwest_Property_Management/Elmwood_Townhomes_(Elmwood)/scheduletourwidget/a0F0H00000d3iA5UAI/"
     },
-    franklin: {
-      g: "https://www.myshowing.com/Midwest_Property_Management/Sir_John_Franklin_(Old_Strathcona)/scheduletourwidget/a0F0H00000d3iAMUAY/",
-      s: "https://prop.peek.us/66350e28f4dbddfd2b19646a/self-guided-tour/"
+    "empirepark.prospectportal.com": {
+      selfUrl: "https://prop.peek.us/659c20d06dc4272dc1c6fe18/self-guided-tour/",
+      agentUrl: "https://www.myshowing.com/Midwest_Property_Management/Empire_Park_(Empire_Park)/scheduletourwidget/a0F0H00000d3iA6UAI/"
     },
-    pleasantview: {
-      g: "https://www.myshowing.com/Midwest_Property_Management/Pleasantview_Townhomes_(Empire_Park)/scheduletourwidget/a0F0H00000d3iAIUAY/",
-      s: "https://prop.peek.us/668c75b7bbe11732e731384f/self-guided-tour/"
+    "pleasantviewtownhomes.prospectportal.com": {
+      selfUrl: "https://prop.peek.us/668c75b7bbe11732e731384f/self-guided-tour/",
+      agentUrl: "https://www.myshowing.com/Midwest_Property_Management/Pleasantview_Townhomes_(Empire_Park)/scheduletourwidget/a0F0H00000d3iAIUAY"
     },
-    elmwood: {
-      g: "https://www.myshowing.com/Midwest_Property_Management/Elmwood_Townhomes_(Elmwood)/scheduletourwidget/a0F0H00000d3iA5UAI/",
-      s: "https://prop.peek.us/668c766ffa52e0189568d9a9/self-guided-tour/"
+    "rivervalleytownhomes.prospectportal.com": {
+      selfUrl: "https://prop.peek.us/66350d825cb18b6935f276b2/self-guided-tour/",
+      agentUrl: "https://www.myshowing.com/Midwest_Property_Management/Rivervalley_Townhomes_(Gold_Bar)/scheduletourwidget/a0F0H00000d3iAKUAY/"
     },
-    cricket: {
-      g: "https://www.myshowing.com/Midwest_Property_Management/Cricket_Court_Townhomes_(Aldergrove)/scheduletourwidget/a0F0H00000d3iA1UAI/",
-      s: "https://prop.peek.us/668c76b1edee275669b4508d/self-guided-tour/"
+    "sirjohnfranklin.prospectportal.com": {
+      selfUrl: "https://prop.peek.us/66350e28f4dbddfd2b19646a/self-guided-tour/",
+      agentUrl: "https://www.myshowing.com/Midwest_Property_Management/Sir_John_Franklin_(Old_Strathcona)/scheduletourwidget/a0F0H00000d3iAMUAY"
     },
-    cambrian: {
-      g: "https://www.myshowing.com/Midwest_Property_Management/Cambrian_Court_(Cambrian_Heights)/scheduletourwidget/a0F0H00000d3i9vUAA/",
-      s: "https://prop.peek.us/66aaaa33f7d05462a7f4be8e/self-guided-tour/"
-    },
-    test: {
-      g: "https://www.myshowing.com/Midwest_Property_Management/The_Village_at_Southgate_(Southgate)/scheduletourwidget/a0F0H00000d3iAPUAY/",
-      s: "https://prop.peek.us/66350d32f4dbddfd2b1863d7/self-guided-tour/"
+    "thevillageatsouthgate.prospectportal.com": {
+      selfUrl: "https://prop.peek.us/66350d32f4dbddfd2b1863d7/self-guided-tour/",
+      agentUrl: "https://www.myshowing.com/Midwest_Property_Management/The_Village_at_Southgate_(Southgate)/scheduletourwidget/a0F0H00000d3iAPUAY/"
     }
   };
 
-  // --- Detect current site ---
-  const host = (location.hostname || "").toLowerCase();
-  console.log("[MWM] Host detected:", host);
+  const host = (window.location.hostname || "").replace(/^www\./, "");
+  const cfg = CONFIG[host];
+  if (!cfg) return;
 
-  // --- Smart match ---
-  let matchKey = null;
-  for (const key in map) {
-    if (host.includes(key)) {
-      matchKey = key;
-      break;
-    }
+  if (window.__MPM_TOURS_LOADED__) return;
+  window.__MPM_TOURS_LOADED__ = true;
+
+  function onReady(fn) {
+    if (document.readyState === "complete" || document.readyState === "interactive") fn();
+    else document.addEventListener("DOMContentLoaded", fn, { once: true });
   }
 
-  if (!matchKey) matchKey = "test";
+  function injectStyles() {
+    if (document.getElementById("mpm-tour-styles")) return;
+    const style = document.createElement("style");
+    style.id = "mpm-tour-styles";
+    style.textContent = `
+      :root{
+        --chat-size: 48px;
+        --chat-right: 24px;
+        --chat-bottom: 35px;
+        --gap-chat: 20px;
+        --gap-bubble: 14px;
+        --brand-blue: #093457;
+      }
 
-  const urls = map[matchKey];
-  console.log(`[MWM] Matched property: ${matchKey}`);
-  console.log(`[MWM] Guided: ${urls.g}`);
-  console.log(`[MWM] Self-guided: ${urls.s}`);
+      #mpm-tour-dock{
+        position: fixed;
+        right: calc(var(--chat-right) + var(--chat-size) + var(--gap-chat));
+        bottom: var(--chat-bottom);
+        display: flex;
+        align-items: center;
+        gap: var(--gap-bubble);
+        z-index: 99997;
+      }
 
-  // --- Button clicks ---
-  guidedBtn.addEventListener("click", () => window.open(urls.g, "_blank", "noopener"));
-  selfBtn.addEventListener("click", () => window.open(urls.s, "_blank", "noopener"));
+      .mpm-tour-btn{
+        width: var(--chat-size);
+        height: var(--chat-size);
+        border-radius: 50%;
+        background: var(--brand-blue);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        -webkit-tap-highlight-color: transparent;
+        position: relative;
+      }
+
+      .mpm-tour-btn svg{
+        width: 60%;
+        height: 60%;
+        fill: #fff;
+        display: block;
+      }
+
+      .mpm-lock-wrap{ position: relative; width:60%; height:60%; }
+      .mpm-lock-wrap svg{
+        position:absolute; inset:0; width:100%; height:100%;
+        fill:#fff; transition: opacity .18s ease, transform .18s ease;
+      }
+      .mpm-lock-open{ opacity:0; transform: translateY(2px) scale(0.96); }
+      .mpm-lock-closed{ opacity:1; transform: translateY(0) scale(1); }
+
+      @media (hover:hover){
+        .mpm-self:hover .mpm-lock-closed{ opacity:0; transform: translateY(-2px) scale(0.96); }
+        .mpm-self:hover .mpm-lock-open{ opacity:1; transform: translateY(0) scale(1); }
+      }
+
+      @media (max-width: 768px){
+        :root{
+          --chat-right: 20px;
+          --chat-bottom: 38px;
+          --gap-chat: 18px;
+          --gap-bubble: 12px;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce){
+        .mpm-lock-wrap svg{ transition:none !important; }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function renderDock() {
+    if (document.getElementById("mpm-tour-dock")) return;
+    if (!document.body) return setTimeout(renderDock, 100);
+
+    const dock = document.createElement("div");
+    dock.id = "mpm-tour-dock";
+    dock.innerHTML = `
+      <a class="mpm-tour-btn mpm-agent" href="${cfg.agentUrl}" target="_blank" rel="noopener"
+         aria-label="Agent-Guided Tour" title="Agent-Guided Tour">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M7 2a1 1 0 0 1 1 1v1h8V3a1 1 0 1 1 2 0v1h1a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3h1V3a1 1 0 0 1 1-1Zm13 8H4v9a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-9ZM5 6a1 1 0 0 0-1 1v1h16V7a1 1 0 0 0-1-1H5Z"/>
+          <path d="M8 13h2v2H8v-2Zm3 0h2v2h-2v-2Zm3 0h2v2h-2v-2Z"/>
+        </svg>
+      </a>
+
+      <a class="mpm-tour-btn mpm-self" href="${cfg.selfUrl}" target="_blank" rel="noopener"
+         aria-label="Self-Guided Tour" title="Self-Guided Tour">
+        <span class="mpm-lock-wrap" aria-hidden="true">
+          <svg class="mpm-lock-closed" viewBox="0 0 24 24">
+            <path d="M17 9h-1V7a4 4 0 0 0-8 0v2H7a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2Zm-7-2a2 2 0 1 1 4 0v2h-4V7Zm3 9.73V18a1 1 0 0 1-2 0v-1.27a2 2 0 1 1 2 0Z"/>
+          </svg>
+          <svg class="mpm-lock-open" viewBox="0 0 24 24">
+            <path d="M12 2a4 4 0 0 0-4 4v2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-8V6a2 2 0 1 1 4 0h2a4 4 0 0 0-4-4z"/>
+          </svg>
+        </span>
+      </a>
+    `;
+    document.body.appendChild(dock);
+  }
+
+  onReady(function () {
+    injectStyles();
+    renderDock();
+  });
 })();
