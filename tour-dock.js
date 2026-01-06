@@ -1,8 +1,8 @@
 (function () {
   "use strict";
 
-  // ===== VERSION (bump this when updating) =====
-  const VERSION = "mpm-tour-dock-pill-left-v1";
+  // ===== VERSION =====
+  const VERSION = "tour-dock-white-pill-no-chat-overlap-v1";
 
   // ===== Property map (9 sites) =====
   const CONFIG = {
@@ -59,8 +59,8 @@
   if (!cfg) return;
 
   // ===== Single-run guard =====
-  if (window.__MPM_TOUR_DOCK_PILL_LEFT__) return;
-  window.__MPM_TOUR_DOCK_PILL_LEFT__ = true;
+  if (window.__MPM_TOUR_DOCK_WHITE_PILL__) return;
+  window.__MPM_TOUR_DOCK_WHITE_PILL__ = true;
 
   function onReady(fn) {
     if (document.readyState === "complete" || document.readyState === "interactive") fn();
@@ -68,22 +68,26 @@
   }
 
   function injectStyles() {
-    if (document.getElementById("mpm-tour-dock-pill-left-styles")) return;
+    if (document.getElementById("mpm-tour-dock-styles-white-pill")) return;
 
     const style = document.createElement("style");
-    style.id = "mpm-tour-dock-pill-left-styles";
+    style.id = "mpm-tour-dock-styles-white-pill";
     style.textContent = `
       :root{
         --mpm-btn: 48px;
-        --mpm-right: 24px;
         --mpm-bottom: 35px;
-        --mpm-gap: 12px;
 
+        /* Default dock right (will be overwritten by JS when chat is detected) */
+        --mpm-right: 24px;
+
+        /* Extra safety gap from chat */
+        --mpm-chat-gap: 18px;
+
+        --mpm-gap: 12px;
         --mpm-blue: #093457;
 
         /* White pill */
         --mpm-pill-bg: rgba(255,255,255,.96);
-        --mpm-pill-radius: 999px;
         --mpm-pill-pad: 10px;
         --mpm-pill-shadow: 0 16px 38px rgba(0,0,0,.14);
 
@@ -92,18 +96,16 @@
         --mpm-tip-text: #fff;
       }
 
-      /* Dock wrapper */
-      #mpm-tour-dock-pill-left{
+      #mpm-tour-dock{
         position: fixed;
         right: var(--mpm-right);
         bottom: var(--mpm-bottom);
         z-index: 999999;
       }
 
-      /* White pill that holds the buttons */
       .mpm-pill{
         background: var(--mpm-pill-bg);
-        border-radius: var(--mpm-pill-radius);
+        border-radius: 999px;
         padding: var(--mpm-pill-pad);
         display: inline-flex;
         align-items: center;
@@ -132,14 +134,12 @@
 
       .mpm-btn svg{ width: 60%; height: 60%; fill: #fff; display:block; }
 
-      /* Strong pulse on calendar */
-      .mpm-btn--agent{
-        animation: mpmPulsePillLeft 1.9s ease-in-out infinite;
-      }
-      @keyframes mpmPulsePillLeft{
-        0%   { transform: scale(1); }
-        50%  { transform: scale(1.07); }
-        100% { transform: scale(1); }
+      /* Pulse on calendar */
+      .mpm-btn--agent{ animation: mpmPulse 1.9s ease-in-out infinite; }
+      @keyframes mpmPulse{
+        0%{ transform: scale(1); }
+        50%{ transform: scale(1.07); }
+        100%{ transform: scale(1); }
       }
 
       @media (hover:hover){
@@ -147,7 +147,7 @@
         .mpm-btn:hover{ transform: translateY(-2px) scale(1.03); filter: brightness(1.06); }
       }
 
-      /* ===== Tooltip label (shows to the LEFT of the pill) ===== */
+      /* Tooltip */
       .mpm-btn::after{
         content: attr(data-label);
         position: absolute;
@@ -180,17 +180,14 @@
         border-left: 8px solid var(--mpm-tip-bg);
         transition: opacity .14s ease;
       }
-
       @media (hover:hover){
         .mpm-btn:hover::after{ opacity: 1; transform: translateY(-50%) translateX(0); }
         .mpm-btn:hover::before{ opacity: 1; }
       }
-
-      /* Touch: show tooltip when toggled */
       .mpm-show-tip::after{ opacity:1 !important; transform: translateY(-50%) translateX(0) !important; }
       .mpm-show-tip::before{ opacity:1 !important; }
 
-      /* Self button lock swap */
+      /* Lock swap */
       .mpm-lock{ position: relative; width:60%; height:60%; }
       .mpm-lock svg{
         position:absolute; inset:0; width:100%; height:100%;
@@ -198,14 +195,13 @@
       }
       .mpm-lock--open{ opacity:0; transform: translateY(2px) scale(.96); }
       .mpm-lock--closed{ opacity:1; transform: translateY(0) scale(1); }
-
       @media (hover:hover){
         .mpm-btn--self:hover .mpm-lock--closed{ opacity:0; transform: translateY(-2px) scale(.96); }
         .mpm-btn--self:hover .mpm-lock--open{ opacity:1; transform: translateY(0) scale(1); }
       }
 
       @media (max-width: 768px){
-        :root{ --mpm-right: 18px; --mpm-bottom: 38px; --mpm-gap: 10px; --mpm-pill-pad: 9px; }
+        :root{ --mpm-bottom: 38px; --mpm-gap: 10px; --mpm-pill-pad: 9px; }
       }
 
       @media (prefers-reduced-motion: reduce){
@@ -216,12 +212,75 @@
     document.head.appendChild(style);
   }
 
+  // Try to detect chat widget near bottom-right and move dock left of it.
+  function computeRightOffset() {
+    // Common candidates for floating chat buttons/containers.
+    const candidates = [
+      "#conciergeplugin",
+      ".conciergeplugin",
+      "iframe[src*='myshowing.com']",
+      "iframe[id*='concierge']",
+      "iframe[name*='concierge']",
+      "[class*='chat']",
+      "[id*='chat']",
+      "[class*='widget']",
+      "[id*='widget']",
+    ];
+
+    // Find an element that is fixed near the bottom-right.
+    let best = null;
+    let bestScore = -Infinity;
+
+    candidates.forEach((sel) => {
+      document.querySelectorAll(sel).forEach((el) => {
+        try {
+          const r = el.getBoundingClientRect();
+          const cs = window.getComputedStyle(el);
+          const isFixed = cs.position === "fixed";
+          const visible = r.width > 30 && r.height > 30 && cs.display !== "none" && cs.visibility !== "hidden" && cs.opacity !== "0";
+          const nearBottomRight =
+            r.right > window.innerWidth - 220 && r.bottom > window.innerHeight - 220;
+
+          if (isFixed && visible && nearBottomRight) {
+            // Score: bigger + closer to corner
+            const score = r.width * r.height - (window.innerWidth - r.right) * 10 - (window.innerHeight - r.bottom) * 10;
+            if (score > bestScore) {
+              best = { el, rect: r };
+              bestScore = score;
+            }
+          }
+        } catch (_) {}
+      });
+    });
+
+    if (!best) return null;
+
+    // Compute how far from the right edge the chat occupies
+    const chatRect = best.rect;
+    const chatRightGap = Math.max(0, window.innerWidth - chatRect.right); // px from right edge
+    const chatWidth = chatRect.width;
+
+    // Dock should sit left of chat: right = (gap from right) + chat width + extra gap
+    const extra = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--mpm-chat-gap")) || 18;
+    return Math.round(chatRightGap + chatWidth + extra);
+  }
+
+  function applyRightOffset() {
+    const rightPx = computeRightOffset();
+    if (rightPx != null) {
+      document.documentElement.style.setProperty("--mpm-right", rightPx + "px");
+    } else {
+      // Fallback default
+      document.documentElement.style.setProperty("--mpm-right", "24px");
+    }
+  }
+
   function renderDock() {
-    if (document.getElementById("mpm-tour-dock-pill-left")) return;
+    if (document.getElementById("mpm-tour-dock")) return;
     if (!document.body) return setTimeout(renderDock, 60);
 
     const wrap = document.createElement("div");
-    wrap.id = "mpm-tour-dock-pill-left";
+    wrap.id = "mpm-tour-dock";
 
     wrap.innerHTML = `
       <div class="mpm-pill" aria-label="Tour options">
@@ -278,6 +337,17 @@
   onReady(function () {
     injectStyles();
     renderDock();
+
+    // Apply offset now + re-check after chat loads (many chat widgets load late)
+    applyRightOffset();
+    setTimeout(applyRightOffset, 800);
+    setTimeout(applyRightOffset, 2000);
+
+    // Also adjust on resize
+    window.addEventListener("resize", function () {
+      applyRightOffset();
+    });
+
     window.__MPM_TOUR_DOCK_VERSION__ = VERSION;
   });
 })();
